@@ -1,44 +1,205 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>QuickTask — Get things done</title>
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
   <aside class="sidebar">
-    <div class="brand"><span class="brand-icon">✓</span><span>QuickTask</span></div>
+    <div class="brand">
+      <span class="brand-icon">✓</span>
+      <span>QuickTask</span>
+    </div>
     <div class="nav-label">WORKSPACE</div>
-    <button class="nav active" data-page="dashboard">▦ <span>Dashboard</span></button>
-    <button class="nav" data-page="tasks">☑ <span>My Tasks</span></button>
+    <button class="nav active" data-page="dashboard">
+      ▦ <span>Dashboard</span>
+    </button>
+    <button class="nav" data-page="tasks">
+      ☑ <span>My Tasks</span>
+    </button>
     <div class="nav-label">YOUR VOICE</div>
-    <button class="nav" data-page="feedback">✉ <span>Submit Feedback</span></button>
-    <button class="nav" data-page="history">▤ <span>Feedback History</span></button>
-    <div class="sidebar-bottom"><div class="avatar">Q</div><div><b>QuickTask User</b><small>Demo workspace</small></div></div>
+    <button class="nav" data-page="feedback">
+      ✉ <span>Submit Feedback</span>
+    </button>
+    <button class="nav" data-page="history">
+      ▤ <span>Feedback History</span>
+    </button>
+    <div class="sidebar-bottom">
+      <div class="avatar">Q</div>
+      <div>
+        <b>QuickTask User</b>
+        <small>Demo workspace</small>
+      </div>
+    </div>
   </aside>
 
   <main class="main">
-    <header class="topbar"><div><span class="eyebrow">WORKSPACE</span><h1 id="page-title">Dashboard</h1></div><span class="status"><i></i> All systems operational</span></header>
+    <header class="topbar">
+      <div>
+        <span class="eyebrow">WORKSPACE</span>
+        <h1 id="page-title">Dashboard</h1>
+      </div>
+      <span class="status">
+        <i></i> All systems operational
+      </span>
+    </header>
 
     <section class="page active" id="dashboard">
       <div class="welcome">
-        <div><span class="eyebrow light">MONDAY MOTIVATION</span><h2>Get things done,<br>one task at a time.</h2><p>Keep your day focused and your ideas moving.</p></div>
+        <div>
+          <span class="eyebrow light">MONDAY MOTIVATION</span>
+          <h2>Get things done,<br>one task at a time.</h2>
+          <p>Keep your day focused and your ideas moving.</p>
+        </div>
         <div class="welcome-art">✓</div>
       </div>
+
       <div class="stats">
-        <article class="stat-card"><span class="stat-icon blue">☑</span><small>Total tasks</small><strong id="total-tasks">0</strong><em>Across your workspace</em></article>
-        <article class="stat-card"><span class="stat-icon green">✓</span><small>Completed</small><strong id="completed-tasks">0</strong><em>Nice work — keep going</em></article>
-        <article class="stat-card"><span class="stat-icon orange">◷</span><small>Pending</small><strong id="pending-tasks">0</strong><em>Ready for your focus</em></article>
-        <article class="stat-card"><span class="stat-icon purple">✉</span><small>Feedback received</small><strong id="feedback-count">0</strong><em>Your voice matters</em></article>
-        <article class="stat-card"><span class="stat-icon gold">🏆</span><small>Leaderboard</small><strong id="leaderboard-count">0</strong><em>Top contributors</em></article>
+        <article class="stat-card">
+          <span class="stat-icon blue">☑</span>
+          <small>Total tasks</small>
+          <strong id="total-tasks">0</strong>
+          <em>Across your workspace</em>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon green">✓</span>
+          <small>Completed</small>
+          <strong id="completed-tasks">0</strong>
+          <em>Nice work — keep going</em>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon orange">◷</span>
+          <small>Pending</small>
+          <strong id="pending-tasks">0</strong>
+          <em>Ready for your focus</em>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon purple">✉</span>
+          <small>Feedback received</small>
+          <strong id="feedback-count">0</strong>
+          <em>Your voice matters</em>
+        </article>
       </div>
+
       <div class="content-grid">
-        <article class="panel"><div class="panel-head"><div><h3>Today's tasks</h3><p>A quick look at what needs your attention.</p></div><button class="text-button" data-go="tasks">View all →</button></div><div id="dashboard-tasks" class="task-list"></div></article>
-        <article class="panel feedback-callout"><div class="callout-icon">✦</div><h3>Help us make QuickTask better</h3><p>Your feedback helps us build a simpler, more useful product. Tell us what's working and what isn't.</p><button class="primary" data-go="feedback">Share feedback <span>→</span></button></article>
-        <article class="panel leaderboard-card"><div class="callout-icon">🏆</div><h3>Top contributors</h3><p>See who’s making the most impact.</p><ul class="leaderboard-list"></ul></article>
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Today's tasks</h3>
+              <p>A quick look at what needs your attention.</p>
+            </div>
+            <button class="text-button" data-go="tasks">View all →</button>
+          </div>
+          <div id="dashboard-tasks" class="task-list"></div>
+        </article>
+
+        <article class="panel feedback-callout">
+          <div class="callout-icon">✦</div>
+          <h3>Help us make QuickTask better</h3>
+          <p>Your feedback helps us build a simpler, more useful product. Tell us what's working and what isn't.</p>
+          <button class="primary" data-go="feedback">Share feedback <span>→</span></button>
+        </article>
+
+        <article class="panel leaderboard-panel">
+          <div class="panel-head">
+            <div>
+              <h3>Leaderboard</h3>
+              <p>Top contributors this week.</p>
+            </div>
+          </div>
+          <div id="leaderboard-list" class="leaderboard-list">
+            <div class="empty">No data yet</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="page" id="tasks">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>My Tasks</h3>
+            <p>Create and manage your task list.</p>
+          </div>
+        </div>
+        <form id="task-form" class="task-input-row">
+          <input type="text" id="task-title" placeholder="What needs to be done?" aria-label="New task" />
+          <button type="submit" class="primary">Add task</button>
+        </form>
+        <div id="all-tasks" class="task-list"></div>
+      </div>
+    </section>
+
+    <section class="page" id="feedback">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>Submit Feedback</h3>
+            <p>Tell us how we're doing and how we can improve.</p>
+          </div>
+        </div>
+        <form id="feedback-form" class="feedback-form">
+          <div class="form-row">
+            <label for="fb-name">Name (optional)</label>
+            <input type="text" id="fb-name" name="name" placeholder="Your name" />
+          </div>
+          <div class="form-row">
+            <label for="fb-email">Email (optional)</label>
+            <input type="email" id="fb-email" name="email" placeholder="you@example.com" />
+          </div>
+          <div class="form-row">
+            <label for="fb-category">Category</label>
+            <select id="fb-category" name="category" required>
+              <option value="">Select a category</option>
+              <option value="Feature Request">Feature Request</option>
+              <option value="Bug Report">Bug Report</option>
+              <option value="Improvement">Improvement</option>
+              <option value="Praise">Praise</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label for="fb-title">Title</label>
+            <input type="text" id="fb-title" name="title" placeholder="Brief summary" required maxlength="120" />
+          </div>
+          <div class="form-row">
+            <label for="fb-description">Description</label>
+            <textarea id="fb-description" name="description" placeholder="Tell us more..." required minlength="10" maxlength="3000"></textarea>
+          </div>
+          <div class="form-row">
+            <label for="fb-rating">Rating</label>
+            <select id="fb-rating" name="rating" required>
+              <option value="">Select rating</option>
+              <option value="5">5 — Excellent</option>
+              <option value="4">4 — Good</option>
+              <option value="3">3 — Average</option>
+              <option value="2">2 — Poor</option>
+              <option value="1">1 — Terrible</option>
+            </select>
+          </div>
+          <button type="submit" class="primary">Submit feedback</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="page" id="history">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>Feedback History</h3>
+            <p>Review all submitted feedback.</p>
+          </div>
+        </div>
+        <div id="feedback-list" class="feedback-list">
+          <div class="empty">Loading feedback...</div>
+        </div>
       </div>
     </section>
   </main>
+
+  <div id="toast" class="toast"></div>
 
   <script src="/static/app.js"></script>
 </body>
