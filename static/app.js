@@ -1,7 +1,7 @@
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 let toastTimer;
-function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600)};
+function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600)}
 async function api(url, options={}) {
   const res=await fetch(url,{headers:{"Content-Type":"application/json",...(options.headers||{})},...options});
   const data=await res.json().catch(()=>({}));
@@ -9,50 +9,15 @@ async function api(url, options={}) {
   return data;
 }
 function navigate(page){
-  $$".page").forEach(p=>p.classList.toggle("active",p.id===page));
-  $$".nav").forEach(n=>n.classList.toggle("active",n.dataset.page===page));
+  $$(".page").forEach(p=>p.classList.toggle("active",p.id===page));
+  $$(".nav").forEach(n=>n.classList.toggle("active",n.dataset.page===page));
   const names={dashboard:"Dashboard",tasks:"My Tasks",feedback:"Submit Feedback",history:"Feedback History"};
   $("#page-title").textContent=names[page]||"Dashboard";
   if(page==="history") loadFeedback();
   if(page==="tasks") loadTasks();
 }
-$$".nav").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.page));
-$$"[data-go]").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.go));
-
-// Theme management
-const THEME_KEY = 'quicktask-theme';
-const themeToggle = $('#theme-toggle');
-const html = document.documentElement;
-
-function getInitialTheme() {
-  const stored = localStorage.getItem(THEME_KEY);
-  if (stored) return stored;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
-function applyTheme(theme) {
-  html.setAttribute('data-theme', theme);
-  localStorage.setItem(THEME_KEY, theme);
-}
-
-function toggleTheme() {
-  const current = html.getAttribute('data-theme') || 'light';
-  const next = current === 'dark' ? 'light' : 'dark';
-  applyTheme(next);
-}
-
-// Initialize theme on load
-applyTheme(getInitialTheme());
-
-// Listen for system theme changes (only if user hasn't set a preference)
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-  if (!localStorage.getItem(THEME_KEY)) {
-    applyTheme(e.matches ? 'dark' : 'light');
-  }
-});
-
-// Toggle button click
-themeToggle.addEventListener('click', toggleTheme);
+$$(".nav").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.page)));
+$$("[data-go]").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.go)));
 
 function taskHTML(task){
   return `<div class="task-row ${task.completed?'done':''}">
@@ -61,8 +26,7 @@ function taskHTML(task){
     <button class="delete-task" data-delete="${task.id}" aria-label="Delete task">×</button>
   </div>`;
 }
-function escapeHTML(value){return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","&quot;":"&quot;","'":"&#39;"}[c]));
-}
+function escapeHTML(value){return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 async function loadTasks(){
   try{
     const data=await api("/api/tasks");
@@ -70,46 +34,45 @@ async function loadTasks(){
     $("#completed-tasks").textContent=data.completed;
     $("#pending-tasks").textContent=data.pending;
     $("#task-count").textContent=`${data.total} tasks`;
-    $("#dashboard-tasks").innerHTML = data.tasks.map(taskHTML).join('');
-    $$".task-check").forEach(c=>c.addEventListener("change",()=>toggleTask(c.dataset.toggle));
-    $$".delete-task").forEach(b=>b.addEventListener("click",()=>deleteTask(b.dataset.delete));
-  }catch(e){toast("Failed to load tasks");}
+    $("#dashboard-tasks").innerHTML=data.items.length?data.items.slice(0,5).map(taskHTML).join(""):'<div class="empty">No tasks yet. Add your first task.</div>';
+    $("#all-tasks").innerHTML=data.items.length?data.items.map(taskHTML).join(""):'<div class="empty">No tasks yet. Add one above.</div>';
+  }catch(e){toast(e.message)}
 }
-async function toggleTask(id){
+document.addEventListener("change",async e=>{
+  if(e.target.matches("[data-toggle]")){
+    try{await api(`/api/tasks/${e.target.dataset.toggle}`,{method:"PATCH",body:JSON.stringify({completed:e.target.checked})});loadTasks()}
+    catch(err){toast(err.message)}
+  }
+});
+document.addEventListener("click",async e=>{
+  const id=e.target.dataset.delete;
+  if(id){try{await api(`/api/tasks/${id}`,{method:"DELETE"});loadTasks();toast("Task deleted")}catch(err){toast(err.message)}}
+});
+$("#task-form").addEventListener("submit",async e=>{
+  e.preventDefault();const input=$("#task-title");const title=input.value.trim();if(!title)return;
+  try{await api("/api/tasks",{method:"POST",body:JSON.stringify({title})});input.value="";loadTasks();toast("Task added")}
+  catch(err){toast(err.message)}
+});
+$("#feedback-form").addEventListener("submit",async e=>{
+  e.preventDefault();const form=e.currentTarget;const data=Object.fromEntries(new FormData(form).entries());data.rating=Number(data.rating);
+  const msg=$("#feedback-message");msg.className="message";msg.textContent="Submitting...";
   try{
-    await api(`/api/tasks/${id}`,{method:"PATCH",body:JSON.stringify({completed:true})});
-    loadTasks();
-  }catch(e){toast("Failed to update task");}
-}
-async function deleteTask(id){
-  try{
-    await api(`/api/tasks/${id}`,{method:"DELETE"});
-    loadTasks();
-  }catch(e){toast("Failed to delete task");}
-}
+    const result=await api("/api/feedback",{method:"POST",body:JSON.stringify(data)});
+    msg.className="message success";msg.textContent=`Thank you! Your feedback was submitted. Reference: ${result.id}`;
+    form.reset();loadStats();
+  }catch(err){msg.className="message error";msg.textContent=err.message}
+});
 async function loadFeedback(){
   try{
     const data=await api("/api/feedback");
-    $("#feedback-count").textContent=data.total||data.length;
-    const list=$("#feedback-list");
-    list.innerHTML=data.map(f=>`<div class="feedback-item"><strong>${escapeHTML(f.title)}</strong><p>${escapeHTML(f.description)}</p><small>${f.category} · ${f.rating}/5</small></div>`).join('');
-  }catch(e){toast("Failed to load feedback");}
+    $("#history-count").textContent=`${data.items.length} submissions`;
+    $("#feedback-history").innerHTML=data.items.length?data.items.map(item=>`
+      <article class="history-card">
+        <div class="history-top"><span class="tag">${escapeHTML(item.category)}</span><span class="history-meta">${new Date(item.created_at).toLocaleString()}</span></div>
+        <h3>${escapeHTML(item.title)}</h3><p>${escapeHTML(item.description)}</p>
+        <div class="history-meta"><span>${escapeHTML(item.id)}</span><span class="stars">${"★".repeat(item.rating)}${"☆".repeat(5-item.rating)}</span>${item.name?`<span>By ${escapeHTML(item.name)}</span>`:""}</div>
+      </article>`).join(""):'<div class="panel empty">No feedback submitted yet. Be the first to share an idea!</div>';
+  }catch(e){$("#feedback-history").innerHTML=`<div class="panel empty">${escapeHTML(e.message)}</div>`}
 }
-async function submitFeedback(e){
-  e.preventDefault();
-  try{
-    await api("/api/feedback",{method:"POST",body:JSON.stringify({
-      name:$("#fb-name").value,
-      email:$("#fb-email").value,
-      category:$("#fb-category").value,
-      title:$("#fb-title").value,
-      description:$("#fb-description").value,
-      rating:parseInt($("#fb-rating").value,10)
-    })});
-    toast("Feedback submitted");
-    e.target.reset();
-    navigate("history");
-  }catch(err){toast(err.message);}
-}
-$("#feedback-form").addEventListener("submit",submitFeedback);
-navigate("dashboard");
+async function loadStats(){try{const data=await api("/api/feedback/stats");$("#feedback-count").textContent=data.total}catch(e){}}
+loadTasks();loadStats();

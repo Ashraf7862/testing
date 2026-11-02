@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar">
     <div class="brand"><span class="brand-icon">✓</span><span>QuickTask</span></div>
     <div class="nav-label">WORKSPACE</div>
     <button class="nav active" data-page="dashboard">▦ <span>Dashboard</span></button>
@@ -18,15 +18,7 @@
   </aside>
 
   <main class="main">
-    <header class="topbar"><div><span class="eyebrow">WORKSPACE</span><h1 id="page-title">Dashboard</h1></div>
-      <div style="display:flex;align-items:center;gap:12px">
-        <span class="status"><i></i> All systems operational</span>
-        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
-          <svg class="moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          <svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        </button>
-      </div>
-    </header>
+    <header class="topbar"><div><span class="eyebrow">WORKSPACE</span><h1 id="page-title">Dashboard</h1></div><span class="status"><i></i> All systems operational</span></header>
 
     <section class="page active" id="dashboard">
       <div class="welcome">
@@ -39,37 +31,42 @@
         <article class="stat-card"><span class="stat-icon orange">◷</span><small>Pending</small><strong id="pending-tasks">0</strong><em>Ready for your focus</em></article>
         <article class="stat-card"><span class="stat-icon purple">✉</span><small>Feedback received</small><strong id="feedback-count">0</strong><em>Your voice matters</em></article>
       </div>
-      <div class="tasks-section">
-        <h3>Today's Tasks</h3>
-        <div id="dashboard-tasks"></div>
+      <div class="content-grid">
+        <article class="panel"><div class="panel-head"><div><h3>Today's tasks</h3><p>A quick look at what needs your attention.</p></div><button class="text-button" data-go="tasks">View all →</button></div><div id="dashboard-tasks" class="task-list"></div></article>
+        <article class="panel feedback-callout"><div class="callout-icon">✦</div><h3>Help us make QuickTask better</h3><p>Your feedback helps us build a simpler, more useful product. Tell us what's working and what isn't.</p><button class="primary" data-go="feedback">Share feedback <span>→</span></button></article>
       </div>
     </section>
 
     <section class="page" id="tasks">
-      <div class="page-header"><h2>My Tasks</h2></div>
-      <div id="tasks-list"></div>
+      <div class="section-intro"><div><h2>Your tasks</h2><p>Plan your work and make progress every day.</p></div></div>
+      <form id="task-form" class="add-task"><input id="task-title" placeholder="What needs to get done?" maxlength="160" required><button class="primary">＋ Add task</button></form>
+      <div class="panel"><div class="panel-head"><div><h3>Task list</h3><p>Check off tasks as you complete them.</p></div><span class="count-pill" id="task-count">0 tasks</span></div><div id="all-tasks" class="task-list"></div></div>
     </section>
 
     <section class="page" id="feedback">
-      <div class="page-header"><h2>Submit Feedback</h2></div>
-      <form id="feedback-form" class="feedback-form">
-        <div class="form-group"><label>Name</label><input type="text" id="fb-name" placeholder="Your name"></div>
-        <div class="form-group"><label>Email</label><input type="email" id="fb-email" placeholder="you@example.com"></div>
-        <div class="form-group"><label>Category</label><select id="fb-category"><option>Feature Request</option><option>Bug Report</option><option>Improvement</option><option>Other</option></select></div>
-        <div class="form-group"><label>Title</label><input type="text" id="fb-title" placeholder="Brief summary"></div>
-        <div class="form-group"><label>Description</label><textarea id="fb-description" rows="4" placeholder="Tell us more..."></textarea></div>
-        <div class="form-group"><label>Rating (1-5)</label><select id="fb-rating"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></div>
-        <button type="submit" class="btn btn-primary">Submit Feedback</button>
-      </form>
+      <div class="section-intro"><div><h2>We'd love to hear from you</h2><p>Tell us what you think. Your feedback helps shape the future of QuickTask.</p></div></div>
+      <div class="form-layout">
+        <form id="feedback-form" class="panel feedback-form">
+          <div class="form-heading"><span class="form-icon">✦</span><div><h3>Share your feedback</h3><p>All fields marked with * are required.</p></div></div>
+          <div class="two-fields"><label>Your name <small>Optional</small><input name="name" placeholder="e.g. Alex Morgan" maxlength="80"></label><label>Email <small>Optional</small><input name="email" type="email" placeholder="you@example.com" maxlength="120"></label></div>
+          <label>What is your feedback about? *<select name="category" required><option value="">Choose a category</option><option>Bug Report</option><option>Feature Request</option><option>UI/UX Suggestion</option><option>General Feedback</option><option>Performance</option></select></label>
+          <label>Give it a title *<input name="title" placeholder="Summarize your feedback" minlength="3" maxlength="120" required></label>
+          <label>Tell us more *<textarea name="description" rows="5" minlength="10" maxlength="3000" placeholder="Describe your experience, idea, or the issue you encountered..." required></textarea><small class="hint">At least 10 characters.</small></label>
+          <fieldset><legend>How satisfied are you with QuickTask? *</legend><div class="rating" id="rating"><label><input type="radio" name="rating" value="1" required><span>★</span><small>1</small></label><label><input type="radio" name="rating" value="2"><span>★</span><small>2</small></label><label><input type="radio" name="rating" value="3"><span>★</span><small>3</small></label><label><input type="radio" name="rating" value="4"><span>★</span><small>4</small></label><label><input type="radio" name="rating" value="5"><span>★</span><small>5</small></label></div></fieldset>
+          <div id="feedback-message" class="message" aria-live="polite"></div>
+          <button class="primary submit-button" type="submit">Submit feedback <span>→</span></button>
+        </form>
+        <aside class="side-note"><div class="note-icon">♡</div><h3>Your ideas make us better.</h3><p>We read every submission. Whether it's a small suggestion or a big idea, it helps us improve QuickTask for everyone.</p><div class="note-divider"></div><div class="note-stat"><strong>1–5</strong><span>Rate your experience</span></div><div class="note-stat"><strong>100%</strong><span>Of feedback is valued</span></div></aside>
+      </div>
     </section>
 
     <section class="page" id="history">
-      <div class="page-header"><h2>Feedback History</h2></div>
-      <div id="feedback-list"></div>
+      <div class="section-intro"><div><h2>Feedback history</h2><p>See what you've shared with the QuickTask team.</p></div><span class="count-pill" id="history-count">0 submissions</span></div>
+      <div id="feedback-history" class="history-list"></div>
     </section>
+    <footer>© 2026 QuickTask <span>Made for better workdays.</span></footer>
   </main>
-
-  <div id="toast"></div>
+  <div id="toast" class="toast" role="status"></div>
   <script src="/static/app.js"></script>
 </body>
 </html>
