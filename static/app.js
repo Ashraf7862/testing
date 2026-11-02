@@ -50,7 +50,7 @@ function taskHTML(task) {
 }
 
 function escapeHTML(value) {
-  return String(value).replace(/[&<>"]'/g, c => ({
+  return String(value).replace(/[&<>"']/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
 }
@@ -83,134 +83,130 @@ async function loadTasks() {
     const taskItems = data.items.length ? data.items.map(taskHTML).join("") : 
       '<div class="empty">No tasks yet. Add your first task.</div>';
     
-    $("dashboard-tasks").innerHTML = data.items.slice(0, 5).map(taskHTML).join("") || 
-      '<div class="empty">No tasks yet. Add your first task.</div>';
-    $("all-tasks").innerHTML = taskItems;
+    $("dashboard-tasks").innerHTML = data.items.slice(0, 5).map(taskHTML).join("");
+    $("tasks-list").innerHTML = taskItems;
+    
+    attachTaskListeners();
   } catch (e) {
-    toast(e.message);
+    console.error(e);
+    toast("Failed to load tasks");
   }
+}
+
+function attachTaskListeners() {
+  $$(".task-check").forEach(cb => {
+    cb.onchange = async () => {
+      try {
+        await api(`/api/tasks/${cb.dataset.toggle}`, {
+          method: "PATCH",
+          body: JSON.stringify({ completed: cb.checked })
+        });
+        loadTasks();
+        loadDashboard();
+      } catch (e) {
+        cb.checked = !cb.checked;
+        toast(e.message);
+      }
+    };
+  });
+  $$(".delete-task").forEach(btn => {
+    btn.onclick = async () => {
+      if (!confirm("Delete this task?")) return;
+      try {
+        await api(`/api/tasks/${btn.dataset.delete}`, { method: "DELETE" });
+        loadTasks();
+        loadDashboard();
+      } catch (e) {
+        toast(e.message);
+      }
+    };
+  });
 }
 
 async function loadDashboard() {
   try {
-    const [taskData, feedbackData] = await Promise.all([
+    const [tasks, feedback] = await Promise.all([
       api("/api/tasks"),
-      api("/api/feedback?limit=1")
+      api("/api/feedback/stats")
     ]);
-    $("total-tasks").textContent = taskData.total;
-    $("completed-tasks").textContent = taskData.completed;
-    $("pending-tasks").textContent = taskData.pending;
-    $("feedback-count").textContent = feedbackData.total;
-    
-    $("dashboard-tasks").innerHTML = taskData.items.slice(0, 5).map(taskHTML).join("") || 
-      '<div class="empty">No tasks yet. Add your first task.</div>';
+    $("total-tasks").textContent = tasks.total;
+    $("completed-tasks").textContent = tasks.completed;
+    $("pending-tasks").textContent = tasks.pending;
+    $("feedback-count").textContent = feedback.total;
+    $("dashboard-tasks").innerHTML = tasks.items.slice(0, 5).map(taskHTML).join("");
+    attachTaskListeners();
   } catch (e) {
-    toast(e.message);
+    console.error(e);
   }
 }
 
 async function loadFeedback() {
   try {
-    const data = await api("/api/feedback?limit=50");
-    const list = $("feedback-list");
-    if (data.items.length === 0) {
-      list.innerHTML = '<div class="empty">No feedback yet. Be the first to share!</div>';
-      return;
-    }
-    list.innerHTML = data.items.map(feedbackHTML).join("");
+    const data = await api("/api/feedback?limit=100");
+    $("feedback-list").innerHTML = data.items.length
+      ? data.items.map(feedbackHTML).join("")
+      : '<div class="empty">No feedback submitted yet.</div>';
+  } catch (e) {
+    console.error(e);
+    toast("Failed to load feedback");
+  }
+}
+
+async function submitFeedback(e) {
+  e.preventDefault();
+  const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Submitting...";
+  
+  try {
+    const payload = {
+      name: form.name.value.trim() || null,
+      email: form.email.value.trim() || null,
+      category: form.category.value,
+      title: form.title.value.trim(),
+      description: form.description.value.trim(),
+      rating: parseInt(form.rating.value, 10)
+    };
+    
+    await api("/api/feedback", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    
+    toast("Feedback submitted successfully!");
+    form.reset();
+    $("rating-value").textContent = "3";
+    navigate("history");
+  } catch (err) {
+    toast(err.message || "Failed to submit feedback");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  }
+}
+
+async function addTask(e) {
+  e.preventDefault();
+  const input = $("new-task-input");
+  const title = input.value.trim();
+  if (!title) return;
+  try {
+    await api("/api/tasks", { method: "POST", body: JSON.stringify({ title }) });
+    input.value = "";
+    loadTasks();
+    loadDashboard();
   } catch (e) {
     toast(e.message);
   }
 }
 
-document.addEventListener("change", async e => {
-  if (e.target.matches("[data-toggle]")) {
-    try {
-      await api(`/api/tasks/${e.target.dataset.toggle}`, {
-        method: "PATCH",
-        body: JSON.stringify({ completed: e.target.checked })
-      });
-      loadTasks();
-    } catch (err) {
-      toast(err.message);
-    }
-  }
+$("feedback-form").addEventListener("submit", submitFeedback);
+$("task-form").addEventListener("submit", addTask);
+
+$("rating").addEventListener("input", (e) => {
+  $("rating-value").textContent = e.target.value;
 });
 
-document.addEventListener("click", async e => {
-  const id = e.target.dataset.delete;
-  if (id) {
-    try {
-      await api(`/api/tasks/${id}`, { method: "DELETE" });
-      loadTasks();
-      toast("Task deleted");
-    } catch (err) {
-      toast(err.message);
-    }
-  }
-});
-
-$("task-form").addEventListener("submit", async e => {
-  e.preventDefault();
-  const input = $("task-title");
-  const title = input.value.trim();
-  if (!title) return;
-  
-  try {
-    await api("/api/tasks", {
-      method: "POST",
-      body: JSON.stringify({ title })
-    });
-    input.value = "";
-    loadTasks();
-    toast("Task added!");
-  } catch (err) {
-    toast(err.message);
-  }
-});
-
-$("feedback-form").addEventListener("submit", async e => {
-  e.preventDefault();
-  
-  const formData = {
-    name: $("fb-name").value.trim() || undefined,
-    email: $("fb-email").value.trim() || undefined,
-    category: $("fb-category").value,
-    title: $("fb-title").value.trim(),
-    description: $("fb-description").value.trim(),
-    rating: parseInt($("fb-rating").value, 10)
-  };
-  
-  if (!formData.category) {
-    toast("Please select a category");
-    return;
-  }
-  if (!formData.title || formData.title.length < 3) {
-    toast("Title must be at least 3 characters");
-    return;
-  }
-  if (!formData.description || formData.description.length < 10) {
-    toast("Description must be at least 10 characters");
-    return;
-  }
-  if (!formData.rating || formData.rating < 1 || formData.rating > 5) {
-    toast("Please select a rating");
-    return;
-  }
-  
-  try {
-    await api("/api/feedback", {
-      method: "POST",
-      body: JSON.stringify(formData)
-    });
-    
-    $("feedback-form").reset();
-    toast("Feedback submitted! Thank you.");
-    
-    navigate("dashboard");
-  } catch (err) {
-    toast(err.message);
-  }
-});
-
-loadTasks();
+navigate("dashboard");
