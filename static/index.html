@@ -39,38 +39,33 @@
         <article class="stat-card"><span class="stat-icon orange">◷</span><small>Pending</small><strong id="pending-tasks">0</strong><em>Ready for your focus</em></article>
         <article class="stat-card"><span class="stat-icon purple">✉</span><small>Feedback received</small><strong id="feedback-count">0</strong><em>Your voice matters</em></article>
       </div>
-      <div class="content-grid">
-        <article class="panel"><div class="panel-head"><div><h3>Today's tasks</h3><p>A quick look at what needs your attention.</p></div><button class="text-button" data-go="tasks">View all →</button></div><div id="dashboard-tasks" class="task-list"></div></article>
-        <article class="panel feedback-callout"><div class="callout-icon">✦</div><h3>Help us make QuickTask better</h3><p>Your feedback helps us build a simpler, more useful product. Tell us what's working and what isn't.</p><button class="primary" data-go="feedback">Share feedback <span>→</span></button></article>
+      <div class="tasks-section">
+        <h3>Today's Tasks</h3>
+        <div id="dashboard-tasks"></div>
       </div>
     </section>
 
     <section class="page" id="tasks">
-      <div class="section-intro"><div><h2>Your tasks</h2><p>Plan your work and make progress every day.</p></div></div>
-      <form id="task-form" class="task-form"><input type="text" id="task-title" placeholder="What needs to be done?" aria-label="Task title"><button type="submit" class="primary">Add task</button></form>
-      <div id="all-tasks" class="task-list"></div>
+      <div class="page-header"><h2>My Tasks</h2></div>
+      <div id="tasks-list"></div>
     </section>
 
     <section class="page" id="feedback">
-      <div class="section-intro"><div><h2>Submit Feedback</h2><p>Help us improve QuickTask. Your input shapes our roadmap.</p></div></div>
+      <div class="page-header"><h2>Submit Feedback</h2></div>
       <form id="feedback-form" class="feedback-form">
-        <div class="form-row">
-          <div class="form-group"><label for="fb-name">Name (optional)</label><input type="text" id="fb-name" placeholder="Your name" maxlength="80"></div>
-          <div class="form-group"><label for="fb-email">Email (optional)</label><input type="email" id="fb-email" placeholder="you@example.com" maxlength="120"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label for="fb-category">Category</label><select id="fb-category" required><option value="">Select category</option><option>Feature Request</option><option>Bug Report</option><option>UI/UX</option><option>Performance</option><option>Other</option></select></div>
-          <div class="form-group"><label for="fb-rating">Rating</label><div class="rating-group" role="radiogroup" aria-label="Rating 1 to 5"><input type="radio" name="rating" id="r1" value="1"><label for="r1">1</label><input type="radio" name="rating" id="r2" value="2"><label for="r2">2</label><input type="radio" name="rating" id="r3" value="3"><label for="r3">3</label><input type="radio" name="rating" id="r4" value="4"><label for="r4">4</label><input type="radio" name="rating" id="r5" value="5"><label for="r5">5</label></div></div>
-        </div>
-        <div class="form-group full"><label for="fb-title">Title</label><input type="text" id="fb-title" placeholder="Summarize your feedback" required minlength="3" maxlength="120"></div>
-        <div class="form-group full"><label for="fb-description">Description</label><textarea id="fb-description" rows="5" placeholder="Describe your experience, suggestion, or issue in detail..." required minlength="10" maxlength="3000"></textarea></div>
-        <button type="submit" class="primary">Submit feedback</button>
+        <div class="form-group"><label>Name</label><input type="text" id="fb-name" placeholder="Your name"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="fb-email" placeholder="you@example.com"></div>
+        <div class="form-group"><label>Category</label><select id="fb-category"><option>Feature Request</option><option>Bug Report</option><option>Improvement</option><option>Other</option></select></div>
+        <div class="form-group"><label>Title</label><input type="text" id="fb-title" placeholder="Brief summary"></div>
+        <div class="form-group"><label>Description</label><textarea id="fb-description" rows="4" placeholder="Tell us more..."></textarea></div>
+        <div class="form-group"><label>Rating (1-5)</label><select id="fb-rating"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></div>
+        <button type="submit" class="btn btn-primary">Submit Feedback</button>
       </form>
     </section>
 
     <section class="page" id="history">
-      <div class="section-intro"><div><h2>Feedback History</h2><p>All feedback submitted from this browser.</p></div></div>
-      <div id="feedback-list" class="feedback-list"></div>
+      <div class="page-header"><h2>Feedback History</h2></div>
+      <div id="feedback-list"></div>
     </section>
   </main>
 

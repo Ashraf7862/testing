@@ -9,15 +9,15 @@ async function api(url, options={}) {
   return data;
 }
 function navigate(page){
-  $$(".page").forEach(p=>p.classList.toggle("active",p.id===page));
-  $$(".nav").forEach(n=>n.classList.toggle("active",n.dataset.page===page));
+  $$".page").forEach(p=>p.classList.toggle("active",p.id===page));
+  $$".nav").forEach(n=>n.classList.toggle("active",n.dataset.page===page));
   const names={dashboard:"Dashboard",tasks:"My Tasks",feedback:"Submit Feedback",history:"Feedback History"};
   $("#page-title").textContent=names[page]||"Dashboard";
   if(page==="history") loadFeedback();
   if(page==="tasks") loadTasks();
 }
-$$(".nav").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.page)));
-$$("[data-go]").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.go)));
+$$".nav").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.page));
+$$"[data-go]").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.go));
 
 // Theme management
 const THEME_KEY = 'quicktask-theme';
@@ -61,7 +61,8 @@ function taskHTML(task){
     <button class="delete-task" data-delete="${task.id}" aria-label="Delete task">×</button>
   </div>`;
 }
-function escapeHTML(value){return String(value).replace(/[&<>"]'/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function escapeHTML(value){return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","&quot;":"&quot;","'":"&#39;"}[c]));
+}
 async function loadTasks(){
   try{
     const data=await api("/api/tasks");
@@ -69,59 +70,46 @@ async function loadTasks(){
     $("#completed-tasks").textContent=data.completed;
     $("#pending-tasks").textContent=data.pending;
     $("#task-count").textContent=`${data.total} tasks`;
-    $("#dashboard-tasks").innerHTML=data.items.length?data.items.slice(0,5).map(taskHTML).join(""):'<div class="empty">No tasks yet. Add your first task.</div>';
-    $("#all-tasks").innerHTML=data.items.length?data.items.map(taskHTML).join(""):'<div class="empty">No tasks yet. Add one above.</div>';
-  }catch(e){toast(e.message)}
+    $("#dashboard-tasks").innerHTML = data.tasks.map(taskHTML).join('');
+    $$".task-check").forEach(c=>c.addEventListener("change",()=>toggleTask(c.dataset.toggle));
+    $$".delete-task").forEach(b=>b.addEventListener("click",()=>deleteTask(b.dataset.delete));
+  }catch(e){toast("Failed to load tasks");}
 }
-document.addEventListener("change",async e=>{
-  if(e.target.matches("[data-toggle]")){
-    try{await api(`/api/tasks/${e.target.dataset.toggle}`,{method:"PATCH",body:JSON.stringify({completed:e.target.checked})});loadTasks()}
-    catch(err){toast(err.message)}
-  }
-});
-document.addEventListener("click",async e=>{
-  const id=e.target.dataset.delete;
-  if(id){try{await api(`/api/tasks/${id}`,{method:"DELETE"});loadTasks();toast("Task deleted")}catch(err){toast(err.message)}}
-});
-$("#task-form").addEventListener("submit",async e=>{
-  e.preventDefault();const input=$("#task-title");const title=input.value.trim();if(!title)return;
-  try{await api("/api/tasks",{method:"POST",body:JSON.stringify({title})});input.value="";loadTasks();toast("Task added")}catch(err){toast(err.message)}
-});
-
-$("#feedback-form").addEventListener("submit",async e=>{
-  e.preventDefault();
-  const payload={
-    name:$("#fb-name").value.trim()||null,
-    email:$("#fb-email").value.trim()||null,
-    category:$("#fb-category").value,
-    title:$("#fb-title").value.trim(),
-    description:$("#fb-description").value.trim(),
-    rating:parseInt($("input[name=rating]:checked").value||0,10)
-  };
-  if(!payload.category||!payload.title||!payload.description||!payload.rating){toast("Please fill all required fields");return}
-  try{await api("/api/feedback",{method:"POST",body:JSON.stringify(payload)});$("#feedback-form").reset();toast("Feedback submitted — thank you!");navigate("history")}catch(err){toast(err.message)}
-});
-
+async function toggleTask(id){
+  try{
+    await api(`/api/tasks/${id}`,{method:"PATCH",body:JSON.stringify({completed:true})});
+    loadTasks();
+  }catch(e){toast("Failed to update task");}
+}
+async function deleteTask(id){
+  try{
+    await api(`/api/tasks/${id}`,{method:"DELETE"});
+    loadTasks();
+  }catch(e){toast("Failed to delete task");}
+}
 async function loadFeedback(){
   try{
-    const data=await api("/api/feedback?limit=50");
-    $("#feedback-count").textContent=data.total;
-    if(!data.items.length){$("#feedback-list").innerHTML='<div class="empty">No feedback yet. Be the first to share your thoughts!</div>';return}
-    $("#feedback-list").innerHTML=data.items.map(fb=>`<article class="feedback-card">
-      <div class="feedback-head">
-        <div class="feedback-meta">
-          <span class="feedback-name">${escapeHTML(fb.name||"Anonymous")}</span>
-          <small>${new Date(fb.created_at).toLocaleDateString(undefined,{dateStyle:"medium",timeStyle:"short"})}</small>
-        </div>
-        <span class="feedback-category">${escapeHTML(fb.category)}</span>
-      </div>
-      <h4 class="feedback-title">${escapeHTML(fb.title)}</h4>
-      <p class="feedback-desc">${escapeHTML(fb.description)}</p>
-      <div class="feedback-rating"><span class="stars">${"★".repeat(fb.rating)}${"☆".repeat(5-fb.rating)}</span><span style="color:var(--muted);font-size:12px">${fb.rating}/5</span></div>
-    </article>`).join("");
-  }catch(e){toast(e.message)}
+    const data=await api("/api/feedback");
+    $("#feedback-count").textContent=data.total||data.length;
+    const list=$("#feedback-list");
+    list.innerHTML=data.map(f=>`<div class="feedback-item"><strong>${escapeHTML(f.title)}</strong><p>${escapeHTML(f.description)}</p><small>${f.category} · ${f.rating}/5</small></div>`).join('');
+  }catch(e){toast("Failed to load feedback");}
 }
-
-// Initial load
-loadTasks();
-loadFeedback();
+async function submitFeedback(e){
+  e.preventDefault();
+  try{
+    await api("/api/feedback",{method:"POST",body:JSON.stringify({
+      name:$("#fb-name").value,
+      email:$("#fb-email").value,
+      category:$("#fb-category").value,
+      title:$("#fb-title").value,
+      description:$("#fb-description").value,
+      rating:parseInt($("#fb-rating").value,10)
+    })});
+    toast("Feedback submitted");
+    e.target.reset();
+    navigate("history");
+  }catch(err){toast(err.message);}
+}
+$("#feedback-form").addEventListener("submit",submitFeedback);
+navigate("dashboard");
