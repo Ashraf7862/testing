@@ -54,6 +54,7 @@ def init_db():
                     'INSERT INTO tasks (id,title,completed,created_at) VALUES (?,?,?,?)',
                     (str(uuid.uuid4()), title, completed, now)
                 )
+        conn.commit()  # Commit the changes
 
 init_db()
 
@@ -88,54 +89,25 @@ def create_feedback(payload: FeedbackIn):
              payload.title, payload.description, payload.rating, created_at)
         )
         conn.commit()
-    return {"id": feedback_id, "created_at": created_at, **payload.model_dump()}
-
-@app.get("/api/feedback")
-def list_feedback(limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0)):
-    with db() as conn:
-        total = conn.execute('SELECT COUNT(*) FROM feedback').fetchone()[0]
-        rows = conn.execute(
-            'SELECT * FROM feedback ORDER BY created_at DESC LIMIT ? OFFSET ?',
-            (limit, offset)
-        ).fetchall()
-        items = [dict(r) for r in rows]
-    return {"total": total, "limit": limit, "offset": offset, "items": items}
-
-@app.get("/api/feedback/{feedback_id}")
-def get_feedback(feedback_id: str):
-    with db() as conn:
-        row = conn.execute('SELECT * FROM feedback WHERE id = ?', (feedback_id,)).fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail="Feedback not found")
-    return dict(row)
-
-@app.get("/api/feedback/stats")
-def feedback_stats():
-    with db() as conn:
-        total = conn.execute('SELECT COUNT(*) FROM feedback').fetchone()[0]
-        avg_rating = conn.execute('SELECT AVG(rating) FROM feedback').fetchone()[0]
-        categories = conn.execute(
-            'SELECT category, COUNT(*) as count FROM feedback GROUP BY category'
-        ).fetchall()
-    return {
-        "total": total,
-        "average_rating": round(avg_rating, 2) if avg_rating else 0,
-        "categories": {r["category"]: r["count"] for r in categories}
-    }
+        return {"id": feedback_id, "created_at": created_at}
 
 @app.get("/api/tasks")
 def list_tasks():
     with db() as conn:
-        rows = conn.execute('SELECT * FROM tasks ORDER BY created_at DESC').fetchall()
-        items = [dict(r) for r in rows]
-    total = len(items)
-    completed = sum(1 for t in items if t["completed"])
-    pending = total - completed
-    return {"total": total, "completed": completed, "pending": pending, "items": items}
+        tasks = conn.execute('SELECT * FROM tasks ORDER BY created_at DESC').fetchall()
+        total = conn.execute('SELECT COUNT(*) FROM tasks').fetchone()[0]
+        completed = conn.execute('SELECT COUNT(*) FROM tasks WHERE completed = 1').fetchone()[0]
+        pending = total - completed
+        return {
+            "items": [dict(t) for t in tasks],
+            "total": total,
+            "completed": completed,
+            "pending": pending
+        }
 
 @app.post("/api/tasks", status_code=201)
 def create_task(payload: TaskIn):
-    task_id = str(uuid.uuid4())
+    task_id = "TK-" + uuid.uuid4().hex[:8].upper()
     created_at = datetime.now(timezone.utc).isoformat()
     with db() as conn:
         conn.execute(
@@ -143,31 +115,63 @@ def create_task(payload: TaskIn):
             (task_id, payload.title, 0, created_at)
         )
         conn.commit()
-    return {"id": task_id, "title": payload.title, "completed": False, "created_at": created_at}
+        return {"id": task_id, "title": payload.title, "completed": False, "created_at": created_at}
 
 @app.patch("/api/tasks/{task_id}")
 def update_task(task_id: str, payload: TaskUpdate):
     with db() as conn:
-        cur = conn.execute(
+        task = conn.execute('SELECT * FROM tasks WHERE id = ?', (task_id,)).fetchone()
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        conn.execute(
             'UPDATE tasks SET completed = ? WHERE id = ?',
             (1 if payload.completed else 0, task_id)
         )
         conn.commit()
-        if cur.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Task not found")
-    return {"id": task_id, "completed": payload.completed}
+        return {"id": task_id, "completed": payload.completed}
 
-@app.delete("/api/tasks/{task_id}", status_code=204)
+@app.delete("/api/tasks/{task_id}")
 def delete_task(task_id: str):
     with db() as conn:
-        cur = conn.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
-        conn.commit()
-        if cur.rowcount == 0:
+        task = conn.execute('SELECT * FROM tasks WHERE id = ?', (task_id,)).fetchone()
+        if not task:
             raise HTTPException(status_code=404, detail="Task not found")
-    return None
+        conn.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
+        conn.commit()
+        return {"deleted": task_id}
+
+@app.get("/api/feedback")
+def list_feedback(limit: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0)):
+    with db() as conn:
+        items = conn.execute(
+            'SELECT * FROM feedback ORDER BY created_at DESC LIMIT ? OFFSET ?',
+            (limit, offset)
+        ).fetchall()
+        total = conn.execute('SELECT COUNT(*) FROM feedback').fetchone()[0]
+        return {"items": [dict(i) for i in items], "total": total}
+
+@app.get("/api/feedback/{feedback_id}")
+def get_feedback(feedback_id: str):
+    with db() as conn:
+        fb = conn.execute('SELECT * FROM feedback WHERE id = ?', (feedback_id,)).fetchone()
+        if not fb:
+            raise HTTPException(status_code=404, detail="Feedback not found")
+        return dict(fb)
+
+@app.get("/api/feedback/stats")
+def feedback_stats():
+    with db() as conn:
+        total = conn.execute('SELECT COUNT(*) FROM feedback').fetchone()[0]
+        avg = conn.execute('SELECT AVG(rating) FROM feedback').fetchone()[0] or 0
+        categories = conn.execute('SELECT category, COUNT(*) as count FROM feedback GROUP BY category').fetchall()
+        return {
+            "total": total,
+            "average_rating": round(avg, 2),
+            "categories": {c['category']: c['count'] for c in categories}
+        }
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 @app.get("/")
-def root():
+def read_root():
     return FileResponse(BASE_DIR / "static" / "index.html")
